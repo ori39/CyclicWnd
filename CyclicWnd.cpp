@@ -13,8 +13,8 @@
 
 
 // プラグインのコマンド
-#define COMMAND_MOVE_CYCLIC	 1
-
+#define COMMAND_MOVE_CYCLIC			 1
+#define COMMAND_MOVE_CYCLIC_REVERSE  2
 
 // プラグインクラス
 class CCyclicWnd : public TVTest::CTVTestPlugin
@@ -35,6 +35,11 @@ public:
 	BOOL	FeedHeadClientList(std::list<cyclicWndInfo_t*>& list);
 	void	RemoveIconicClientList(std::list<cyclicWndInfo_t*>& list);
 	void	OnMoveCyclic();
+	void	OnMoveCyclicReverse();
+
+private:
+	void	MoveWindowCyclic(bool fReverse);
+
 };
 
 
@@ -63,6 +68,7 @@ bool CCyclicWnd::Initialize()
 	if (m_pApp->GetHostInfo(&Host)
 			&& Host.SupportedPluginVersion >= TVTEST_PLUGIN_VERSION_(0,0,14)) {
 
+		// 「サイクリックにTVTestのウィンドウを移動」の登録
 		TVTest::PluginCommandInfo CommandInfo;
 		CommandInfo.Size           = sizeof(CommandInfo);
 		CommandInfo.Flags          = TVTest::PLUGIN_COMMAND_FLAG_ICONIZE;
@@ -71,15 +77,32 @@ bool CCyclicWnd::Initialize()
 		CommandInfo.pszText        = L"MoveCyclic";
 		CommandInfo.pszName        = L"サイクリックにTVTestのウィンドウを移動";
 		CommandInfo.pszDescription = L"サイクリックにTVTestのウィンドウを移動します";
-		CommandInfo.hbmIcon        =
-			(HBITMAP)::LoadImage(g_hinstDLL, MAKEINTRESOURCE(IDB_ICON),
-								 IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+		CommandInfo.hbmIcon = (HBITMAP)::LoadImage(g_hinstDLL, MAKEINTRESOURCE(IDB_ICON),
+													IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 		m_pApp->RegisterPluginCommand(&CommandInfo);
+
 		::DeleteObject(CommandInfo.hbmIcon);
+		CommandInfo.hbmIcon = NULL;
+
+		// 「サイクリックにTVTestのウィンドウを移動(逆順)」の登録
+		CommandInfo.Size = sizeof(CommandInfo);
+		CommandInfo.Flags = TVTest::PLUGIN_COMMAND_FLAG_ICONIZE;
+		CommandInfo.State = 0;
+		CommandInfo.ID = COMMAND_MOVE_CYCLIC_REVERSE;
+		CommandInfo.pszText = L"MoveCyclicReverse";
+		CommandInfo.pszName = L"サイクリックにTVTestのウィンドウを移動(逆順)";
+		CommandInfo.pszDescription = L"サイクリックにTVTestのウィンドウを移動します(逆順)";
+		CommandInfo.hbmIcon = (HBITMAP)::LoadImage(g_hinstDLL, MAKEINTRESOURCE(IDB_ICONREV),
+													IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+		m_pApp->RegisterPluginCommand(&CommandInfo);
+
+		::DeleteObject(CommandInfo.hbmIcon);
+		CommandInfo.hbmIcon = NULL;
 	}
 	else
 	{
 		m_pApp->RegisterCommand(COMMAND_MOVE_CYCLIC, L"MoveCyclic", L"サイクリックにTVTestのウィンドウを移動");
+		m_pApp->RegisterCommand(COMMAND_MOVE_CYCLIC_REVERSE, L"MoveCyclic", L"サイクリックにTVTestのウィンドウを移動(逆順)");
 	}
 
 	// イベントコールバック関数を登録
@@ -120,6 +143,8 @@ bool CCyclicWnd::OnEnablePlugin(bool fEnable)
 
 	m_pApp->SetPluginCommandState(COMMAND_MOVE_CYCLIC,
 								  m_fEnabled?0:TVTest::PLUGIN_COMMAND_STATE_DISABLED);
+	m_pApp->SetPluginCommandState(COMMAND_MOVE_CYCLIC_REVERSE,
+								  m_fEnabled ? 0 : TVTest::PLUGIN_COMMAND_STATE_DISABLED);
 
 	return true;
 }
@@ -178,7 +203,7 @@ void CCyclicWnd::RemoveIconicClientList(std::list<cyclicWndInfo_t*>& list)
 	list = nonIconicList;
 }
 
-void CCyclicWnd::OnMoveCyclic()
+void CCyclicWnd::MoveWindowCyclic(bool fReverse)
 {
 	std::list<cyclicWndInfo_t*> list;
 	BOOL bRet = FALSE;
@@ -191,6 +216,12 @@ void CCyclicWnd::OnMoveCyclic()
 
 		if (list.size() > 1)
 		{
+			// 逆順に移動する場合、リスト自体を逆順にしておく
+			if (fReverse)
+			{
+				list.reverse();
+			}
+
 			// 自Windowをリストの先頭に持ってきておく
 			bRet = FeedHeadClientList(list);
 			if (bRet)
@@ -234,6 +265,16 @@ void CCyclicWnd::OnMoveCyclic()
 	}
 }
 
+void CCyclicWnd::OnMoveCyclic()
+{
+	MoveWindowCyclic(false);
+}
+
+void CCyclicWnd::OnMoveCyclicReverse()
+{
+	MoveWindowCyclic(true);
+}
+
 // イベントコールバック関数
 // 何かイベントが起きると呼ばれる
 LRESULT CALLBACK CCyclicWnd::EventCallback(UINT Event,LPARAM lParam1,LPARAM lParam2,void *pClientData)
@@ -247,8 +288,13 @@ LRESULT CALLBACK CCyclicWnd::EventCallback(UINT Event,LPARAM lParam1,LPARAM lPar
 
 	case TVTest::EVENT_COMMAND:
 		// コマンドが実行された
-		if (lParam1 == COMMAND_MOVE_CYCLIC) {
+		if (lParam1 == COMMAND_MOVE_CYCLIC)
+		{
 			pThis->OnMoveCyclic();
+		}
+		else if (lParam1 == COMMAND_MOVE_CYCLIC_REVERSE)
+		{
+			pThis->OnMoveCyclicReverse();
 		}
 		return TRUE;
 	}
