@@ -72,7 +72,7 @@ bool CCyclicWnd::Initialize()
 		TVTest::PluginCommandInfo CommandInfo;
 		CommandInfo.Size           = sizeof(CommandInfo);
 		CommandInfo.Flags          = TVTest::PLUGIN_COMMAND_FLAG_ICONIZE;
-		CommandInfo.State          = 0;
+		CommandInfo.State          = TVTest::PLUGIN_COMMAND_STATE_DISABLED;
 		CommandInfo.ID             = COMMAND_MOVE_CYCLIC;
 		CommandInfo.pszText        = L"MoveCyclic";
 		CommandInfo.pszName        = L"サイクリックにTVTestのウィンドウを移動";
@@ -87,7 +87,7 @@ bool CCyclicWnd::Initialize()
 		// 「サイクリックにTVTestのウィンドウを移動(逆順)」の登録
 		CommandInfo.Size = sizeof(CommandInfo);
 		CommandInfo.Flags = TVTest::PLUGIN_COMMAND_FLAG_ICONIZE;
-		CommandInfo.State = 0;
+		CommandInfo.State = TVTest::PLUGIN_COMMAND_STATE_DISABLED;
 		CommandInfo.ID = COMMAND_MOVE_CYCLIC_REVERSE;
 		CommandInfo.pszText = L"MoveCyclicReverse";
 		CommandInfo.pszName = L"サイクリックにTVTestのウィンドウを移動(逆順)";
@@ -129,6 +129,8 @@ bool CCyclicWnd::OnEnablePlugin(bool fEnable)
 {
 	if (m_fEnabled != fEnable)
 	{
+		TVTest::HostInfo Host;
+
 		if (fEnable)
 		{
 			m_CommMgr.JoinService(m_pApp->GetAppWindow());
@@ -139,12 +141,16 @@ bool CCyclicWnd::OnEnablePlugin(bool fEnable)
 		}
 
 		m_fEnabled = fEnable;
-	}
 
-	m_pApp->SetPluginCommandState(COMMAND_MOVE_CYCLIC,
-								  m_fEnabled?0:TVTest::PLUGIN_COMMAND_STATE_DISABLED);
-	m_pApp->SetPluginCommandState(COMMAND_MOVE_CYCLIC_REVERSE,
-								  m_fEnabled ? 0 : TVTest::PLUGIN_COMMAND_STATE_DISABLED);
+		if (m_pApp->GetHostInfo(&Host)
+			&& Host.SupportedPluginVersion >= TVTEST_PLUGIN_VERSION_(0, 0, 14))
+		{
+			m_pApp->SetPluginCommandState(COMMAND_MOVE_CYCLIC,
+				m_fEnabled ? 0 : TVTest::PLUGIN_COMMAND_STATE_DISABLED);
+			m_pApp->SetPluginCommandState(COMMAND_MOVE_CYCLIC_REVERSE,
+				m_fEnabled ? 0 : TVTest::PLUGIN_COMMAND_STATE_DISABLED);
+		}
+	}
 
 	return true;
 }
