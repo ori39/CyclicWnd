@@ -95,10 +95,13 @@
     <ClCompile Include="Lock.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="CyclicWnd.rc" />
+    <None Include="Exports.def" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Exports.def" />
+    <Image Include="Icon.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CyclicWnd.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
