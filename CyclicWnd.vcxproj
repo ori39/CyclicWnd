@@ -99,6 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Icon.bmp" />
+    <Image Include="IconExchange.bmp" />
     <Image Include="IconRev.bmp" />
   </ItemGroup>
   <ItemGroup>

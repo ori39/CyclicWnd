@@ -184,6 +184,7 @@ BOOL CCommMgr::JoinService(HWND hWnd)
 					dwIndex = pMMF->dwCount;
 					pMMF->info[dwIndex].dwProcessID = GetCurrentProcessId();
 					pMMF->info[dwIndex].hWnd = hWnd;
+					pMMF->info[dwIndex].hLastExchangeWnd = NULL;
 
 					DBGMSG((TEXT("CCommMgr::JoinService: dwIndex=%d, dwProcessId=%ld, hWnd=%08x\n"),
 							dwIndex, pMMF->info[dwIndex].dwProcessID, pMMF->info[dwIndex].hWnd));
@@ -267,6 +268,7 @@ BOOL CCommMgr::LeaveService()
 					pInfo = *itr;
 					pMMF->info[nIndex].dwProcessID = pInfo->dwProcessID;
 					pMMF->info[nIndex].hWnd = pInfo->hWnd;
+					pMMF->info[nIndex].hLastExchangeWnd = pInfo->hLastExchangeWnd;
 				}
 
 				FreeClientList(list);
@@ -306,6 +308,7 @@ BOOL CCommMgr::GetClientListInternal(std::list<cyclicWndInfo_t*>& list)
 			pInfo = new cyclicWndInfo_t;
 			pInfo->dwProcessID = pMMF->info[i].dwProcessID;
 			pInfo->hWnd = pMMF->info[i].hWnd;
+			pInfo->hLastExchangeWnd = pMMF->info[i].hLastExchangeWnd;
 
 			list.push_back(pInfo);
 		}
@@ -353,4 +356,62 @@ void CCommMgr::FreeClientList(std::list<cyclicWndInfo_t*>& list)
 	list.clear();
 
 	DBGMSG((TEXT("CCommMgr::FreeClientList: Out, dwCount=%d\n"), list.size()));
+}
+
+BOOL CCommMgr::ExchangeClient(cyclicWndInfo_t* pSrcInfo, cyclicWndInfo_t* pDstInfo)
+{
+	BOOL bRet = FALSE;
+	DBGMSG((TEXT("CCommMgr::ExchangeClient: In\n")));
+
+	if (pSrcInfo == NULL || pDstInfo == NULL)
+	{
+		return bRet;
+	}
+
+	if (m_bInitialized && m_bJoined)
+	{
+		CLock lock(m_hMutex);
+		cyclicWndMMF_t* pMMF = (cyclicWndMMF_t*)m_pData;
+
+		int	nSrcIndex = -1;
+		int nDstIndex = -1;
+
+		for (int i = 0; i < (int) pMMF->dwCount; i++)
+		{
+			if (pMMF->info[i].dwProcessID == pSrcInfo->dwProcessID &&
+				pMMF->info[i].hWnd == pSrcInfo->hWnd)
+			{
+				nSrcIndex = i;
+				break;
+			}
+		}
+		for (int i = 0; i < (int) pMMF->dwCount; i++)
+		{
+			if (pMMF->info[i].dwProcessID == pDstInfo->dwProcessID &&
+				pMMF->info[i].hWnd == pDstInfo->hWnd)
+			{
+				nDstIndex = i;
+				break;
+			}
+		}
+
+		DBGMSG((TEXT("CCommMgr::ExchangeClient: nSrcIndex=%d, nDstIndex=%d\n"), nSrcIndex, nDstIndex));
+		if (nSrcIndex != -1 && nDstIndex != -1)
+		{
+			pMMF->info[nSrcIndex].dwProcessID      = pDstInfo->dwProcessID;
+			pMMF->info[nSrcIndex].hWnd             = pDstInfo->hWnd;
+			pMMF->info[nSrcIndex].hLastExchangeWnd = pDstInfo->hLastExchangeWnd;
+
+			pMMF->info[nDstIndex].dwProcessID      = pSrcInfo->dwProcessID;
+			pMMF->info[nDstIndex].hWnd             = pSrcInfo->hWnd;
+			pMMF->info[nDstIndex].hLastExchangeWnd = pSrcInfo->hLastExchangeWnd;
+
+			bRet = TRUE;
+		}
+
+	}
+
+	DBGMSG((TEXT("CCommMgr::ExchangeClient: Out, rc=%d\n"), bRet));
+
+	return bRet;
 }

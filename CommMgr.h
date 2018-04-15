@@ -8,7 +8,7 @@ typedef struct
 {
 	DWORD	dwProcessID;
 	HWND	hWnd;
-
+	HWND	hLastExchangeWnd;
 } cyclicWndInfo_t;
 
 class CCommMgr
@@ -24,6 +24,7 @@ public:
 	BOOL LeaveService();
 	BOOL GetClientList(std::list<cyclicWndInfo_t*>& list);
 	void FreeClientList(std::list<cyclicWndInfo_t*>& list);
+	BOOL ExchangeClient(cyclicWndInfo_t* pSrcInfo, cyclicWndInfo_t* pDstInfo);
 
 
 private:
