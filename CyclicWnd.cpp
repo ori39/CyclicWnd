@@ -102,7 +102,7 @@ bool CCyclicWnd::Initialize()
 	else
 	{
 		m_pApp->RegisterCommand(COMMAND_MOVE_CYCLIC, L"MoveCyclic", L"サイクリックにTVTestのウィンドウを移動");
-		m_pApp->RegisterCommand(COMMAND_MOVE_CYCLIC_REVERSE, L"MoveCyclic", L"サイクリックにTVTestのウィンドウを移動(逆順)");
+		m_pApp->RegisterCommand(COMMAND_MOVE_CYCLIC_REVERSE, L"MoveCyclicReverse", L"サイクリックにTVTestのウィンドウを移動(逆順)");
 	}
 
 	// イベントコールバック関数を登録
