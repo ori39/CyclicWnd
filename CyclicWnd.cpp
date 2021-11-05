@@ -365,7 +365,7 @@ void CCyclicWnd::OnExchangeWindow()
 						lAreaSize
 					));
 
-					if (lAreaSize > lMaxAreaSize)
+					if (lAreaSize >= lMaxAreaSize)
 					{
 						pDstInfo = pInfo;
 						memcpy(&rcDst, &rc, sizeof(RECT));
